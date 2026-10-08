@@ -17,6 +17,12 @@ impl SystemPathFinder {
     }
 }
 
+impl Default for SystemPathFinder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PathFinder for SystemPathFinder {
     fn config_folder_path(&self) -> Result<PathBuf, Box<dyn Error>> {
         if let Some(base_dirs) = directories::BaseDirs::new() {

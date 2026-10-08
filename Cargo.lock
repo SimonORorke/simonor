@@ -146,7 +146,22 @@ dependencies = [
 name = "simonor"
 version = "0.1.0"
 dependencies = [
+ "simonor-core",
+ "simonor-testing",
+]
+
+[[package]]
+name = "simonor-core"
+version = "0.1.0"
+dependencies = [
  "directories",
+]
+
+[[package]]
+name = "simonor-testing"
+version = "0.1.0"
+dependencies = [
+ "simonor-core",
  "tempfile",
 ]
 

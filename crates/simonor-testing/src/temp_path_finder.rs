@@ -2,7 +2,7 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
-use crate::path_finder::PathFinder;
+use simonor_core::PathFinder;
 
 /// A test path finder that returns temporary folders.
 #[derive(Clone, Debug)]
@@ -19,6 +19,11 @@ impl TempPathFinder {
     }
 }
 
+impl Default for TempPathFinder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl PathFinder for TempPathFinder {
     fn config_folder_path(&self) -> Result<PathBuf, Box<dyn Error>> {

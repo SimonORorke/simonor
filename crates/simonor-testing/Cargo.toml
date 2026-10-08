@@ -1,0 +1,8 @@
+[package]
+name = "simonor-testing"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+simonor-core = { version = "0.1.0", path = "../simonor-core" }
+tempfile = "3.27.0"

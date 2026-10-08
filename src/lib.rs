@@ -1,3 +1,6 @@
-pub mod path_finder;
-pub mod temp_path_finder;
-pub mod settings_io;
+pub use simonor_core::*;
+
+#[cfg(feature = "testing")]
+pub mod testing {
+    pub use simonor_testing::*;
+}

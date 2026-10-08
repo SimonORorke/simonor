@@ -4,5 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-directories = "6.0.0"
-tempfile = "3.27.0"
+simonor-core = { version = "0.1.0", path = "crates/simonor-core" }
+simonor-testing = { version = "0.1.0", path = "crates/simonor-testing", optional = true }
+
+[features]
+default = ["testing"]
+testing = ["dep:simonor-testing"]
+
+[workspace]
+members = [
+    ".",
+    "crates/simonor-core",
+    "crates/simonor-testing",
+]
