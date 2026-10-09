@@ -1,6 +1,9 @@
 pub mod path_finder;
+pub mod release_info;
 pub mod settings_io;
-mod release_info;
+pub mod version_checker;
 
 pub use path_finder::{PathFinder, SystemPathFinder, CONFIG_FOLDER_NOT_FOUND};
+pub use release_info::{ReleaseInfo, SharedReleaseInfo};
 pub use settings_io::{SettingsIo, SettingsReaderWriter};
+pub use version_checker::{VersionChecker};
