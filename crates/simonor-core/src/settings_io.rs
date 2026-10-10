@@ -13,13 +13,13 @@ pub trait SettingsIo: Send + Sync + std::fmt::Debug {
 }
 
 #[derive(Debug)]
-pub struct SettingsReaderWriter {
+pub struct SettingsFileIo {
     app_title: String,
     settings_file_name: String,
     system_path_finder: Box<dyn PathFinder>,
 }
 
-impl SettingsReaderWriter {
+impl SettingsFileIo {
     pub fn new(app_title: String, settings_file_name: String) -> Self {
         Self {
             app_title,
@@ -87,7 +87,7 @@ impl SettingsReaderWriter {
     }
 }
 
-impl SettingsIo for SettingsReaderWriter {
+impl SettingsIo for SettingsFileIo {
     fn set_system_path_finder(&mut self, path_finder: Box<dyn PathFinder>) {
         self.system_path_finder = path_finder;
     }

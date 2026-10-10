@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use simonor::PathFinder;
-use simonor::SettingsReaderWriter;
+use simonor::SettingsFileIo;
 use simonor::SystemPathFinder;
 use simonor::testing::TempPathFinder;
 
@@ -28,7 +28,7 @@ struct TestSettings {
 
 #[test]
 fn test_settings_reader_writer_read_and_write() {
-    let mut reader_writer = SettingsReaderWriter::new("TestApp".to_string(), "TestSettings.toml".to_string());
+    let mut reader_writer = SettingsFileIo::new("TestApp".to_string(), "TestSettings.toml".to_string());
     let temp_finder = TempPathFinder::new();
     reader_writer.set_system_path_finder(Box::new(temp_finder));
 
