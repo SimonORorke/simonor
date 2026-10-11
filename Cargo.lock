@@ -822,8 +822,10 @@ name = "simonor-core"
 version = "0.1.0"
 dependencies = [
  "directories",
+ "log",
  "midir",
  "midly",
+ "rayon",
  "serde",
  "serde_json",
  "toml",
@@ -835,6 +837,7 @@ dependencies = [
 name = "simonor-testing"
 version = "0.1.0"
 dependencies = [
+ "midly",
  "simonor-core",
  "tempfile",
 ]
