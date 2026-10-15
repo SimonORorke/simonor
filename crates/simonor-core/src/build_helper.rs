@@ -12,18 +12,17 @@ impl BuildHelper {
     /// Usage
     /// ````rust
     /// // Generate a manifest to specify the application icon and the exe file properties.
-    /// let manifest_dir = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    /// let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    /// let icon_path = std::path::PathBuf::from("ui/images/Midi port black on red 512.ico");
+    /// let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+    /// let out_dir = std::env::var("OUT_DIR").unwrap();
+    /// let icon_path = format!("ui/images/{}.ico", app_info::APP_TITLE);
     /// let version = app_info::VERSION;
     /// let product_name = app_info::APP_TITLE;
     /// let copyright = app_info::COPYRIGHT;
     /// let rc_path = simonor::BuildHelper::configure_app_icon_and_exe_file_properties(
     ///    &manifest_dir, &out_dir, icon_path, version, product_name, copyright);
     /// let _ = embed_resource::compile(&rc_path, embed_resource::NONE);
-    /// ```
     pub fn configure_app_icon_and_exe_file_properties(
-        manifest_dir: &PathBuf, out_dir: &PathBuf, icon_path: &PathBuf, version: &str,
+        manifest_dir: &str, out_dir: &str, icon_path:&str, version: &str,
         product_name: &str, copyright: &str) -> PathBuf {
         // Parse version into major, minor and patch numbers.
         let parts: Vec<u64> = version.split('.')
@@ -35,7 +34,7 @@ impl BuildHelper {
             parts.get(2).copied().unwrap_or(0),
         );
         // Use forward slashes so rc.exe accepts the path.
-        let rc_icon_path = Path::new(&manifest_dir)
+        let rc_icon_path = Path::new(manifest_dir)
             .join(icon_path)
             .to_string_lossy()
             .replace('\\', "/");
@@ -65,7 +64,7 @@ impl BuildHelper {
                END\n\
              END\n"
         );
-        let rc_path = Path::new(&out_dir).join("version.rc");
+        let rc_path = Path::new(out_dir).join("version.rc");
         std::fs::write(&rc_path, rc.as_bytes()).unwrap();
         rc_path
     }
