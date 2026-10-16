@@ -20,6 +20,10 @@ pub trait IMidiSender: Send {
 
     /// Sends a single MIDI message.
     fn send_message(&mut self, message: &[u8], delay_after_send_ms: u8);
+
+    /// Sends a MIDI note (polyphonic) aftertouch (pressure) message.
+    /// Parameter `channel` is 1-based.
+    fn send_note_aftertouch(&mut self, channel: u8, key: u8, pressure: u8, delay_after_send_ms: u8);
 }
 
 /// A service for sending MIDI messages to the instrument via the shared output connection.
@@ -112,6 +116,12 @@ impl IMidiSender for MidiSender {
                 sleep(std::time::Duration::from_millis(delay_after_send_ms as u64));
             }
         }
+    }
+
+    fn send_note_aftertouch(
+        &mut self, channel: u8, key: u8, pressure: u8, delay_after_send_ms: u8) {
+        self.send_message(&Self::create_note_aftertouch(channel, key, pressure),
+                          delay_after_send_ms);
     }
 }
 

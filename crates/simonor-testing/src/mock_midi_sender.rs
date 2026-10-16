@@ -91,6 +91,12 @@ impl IMidiSender for MockMidiSenderImpl {
             s.error_notifier.lock().unwrap().notify_error();
         }
     }
+
+    fn send_note_aftertouch(
+        &mut self, channel: u8, key: u8, pressure: u8, delay_after_send_ms: u8) {
+        self.send_message(&MidiSender::create_note_aftertouch(channel, key, pressure),
+                          delay_after_send_ms);
+    }
 }
 
 static MOCK_MIDI_SENDER: LazyLock<Mutex<MockMidiSender>> =
