@@ -1,4 +1,4 @@
-﻿use crate::{IIo, IMidiManager, MidiDesktopSettings};
+﻿use crate::{IIo, IMidiHub, MidiDesktopSettings};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DeviceType {
@@ -15,7 +15,7 @@ pub trait MidiDeviceStrategy: Send + Sync {
     fn clone_box(&self) -> Box<dyn MidiDeviceStrategy>;
 
     fn device_type(&self) -> &DeviceType;
-    fn io<'a>(&self, midi: &'a dyn IMidiManager) -> &'a dyn IIo;
+    fn io<'a>(&self, midi: &'a dyn IMidiHub) -> &'a dyn IIo;
     fn device_setting<'a>(&self, settings: &'a dyn MidiDesktopSettings) -> &'a str;
     fn set_device_setting(&self, settings: &mut dyn MidiDesktopSettings, device_name: &str);
     fn msg_cannot_connect(&self, device_name: &str) -> String;
@@ -49,7 +49,7 @@ impl MidiDeviceStrategy for MidiInputStrategy {
         &DeviceType::Input
     }
 
-    fn io<'a>(&self, midi: &'a dyn IMidiManager) -> &'a dyn IIo {
+    fn io<'a>(&self, midi: &'a dyn IMidiHub) -> &'a dyn IIo {
         midi.input()
     }
 
@@ -98,7 +98,7 @@ impl MidiDeviceStrategy for MidiOutputStrategy {
         &DeviceType::Output
     }
 
-    fn io<'a>(&self, midi: &'a dyn IMidiManager) -> &'a dyn IIo {
+    fn io<'a>(&self, midi: &'a dyn IMidiHub) -> &'a dyn IIo {
         midi.output()
     }
 

@@ -1,8 +1,10 @@
 pub mod build_helper;
 pub mod error_notifier;
+pub mod i_midi_hub;
 pub mod i_midi_manager;
 pub mod midi_desktop_settings;
 pub mod midi_device_strategy;
+pub mod midi_hub;
 pub mod midi_manager;
 pub mod midi_message_batch;
 pub mod midi_ports;
@@ -14,9 +16,11 @@ pub mod version_checker;
 
 pub use build_helper::BuildHelper;
 pub use error_notifier::{ErrorNotifier, SharedErrorNotifier};
-pub use i_midi_manager::{IMidiManager, MidiInputListener, SharedMidiManager, SharedOutput};
+pub use i_midi_hub::{IMidiHub, MidiReceiver, SharedMidiHub, SharedOutput};
+pub use i_midi_manager::{IMidiManager, MidiInputListener, SharedMidiManager};
 pub use midi_desktop_settings::{MidiDesktopSettings};
 pub use midi_device_strategy::{DeviceType, MidiDeviceStrategy, MidiInputStrategy, MidiOutputStrategy};
+pub use midi_hub::{MidiHub};
 pub use midi_manager::{MidiManager};
 pub use midi_message_batch::{MidiMessageBatch};
 pub use midi_ports::{IIo, Io, IoDevice, Port};

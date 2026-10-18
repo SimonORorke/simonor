@@ -10,7 +10,7 @@ impl BuildHelper {
     /// and executable file properties, returning the path to the generated .rc file.
     ///
     /// Usage
-    /// ````rust
+    /// ```ignore
     /// // Generate a manifest to specify the application icon and the exe file properties.
     /// let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     /// let out_dir = std::env::var("OUT_DIR").unwrap();
@@ -21,6 +21,7 @@ impl BuildHelper {
     /// let rc_path = simonor::BuildHelper::configure_app_icon_and_exe_file_properties(
     ///    &manifest_dir, &out_dir, icon_path, version, product_name, copyright);
     /// let _ = embed_resource::compile(&rc_path, embed_resource::NONE);
+    /// ```
     pub fn configure_app_icon_and_exe_file_properties(
         manifest_dir: &str, out_dir: &str, icon_path:&str, version: &str,
         product_name: &str, copyright: &str) -> PathBuf {
