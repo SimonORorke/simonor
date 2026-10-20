@@ -7,7 +7,7 @@ use crate::MidiDeviceStrategy;
 /// `MidiHub` raises raw messages only and has no knowledge of the receiver.
 pub trait MidiReceiver: Send + Sync {
     /// A raw inbound MIDI message.
-    fn on_message(&self, message: &[u8]);
+    fn on_message(&mut self, raw_message: &[u8]);
 }
 
 /// A trait that defines the interface for connecting and disconnecting a MIDI input device and a

@@ -41,15 +41,15 @@ impl MidiInputState {
 /// state and forwards raw messages on to the `MidiInputListener`.
 struct MonitoringReceiver {
     input_state: Arc<MidiInputState>,
-    listener: Arc<dyn MidiInputListener>,
+    listener: Arc<Mutex<dyn MidiInputListener>>,
 }
 
 impl MidiReceiver for MonitoringReceiver {
-    fn on_message(&self, message: &[u8]) {
+    fn on_message(&mut self, raw_message: &[u8]) {
         if self.input_state.record_message() {
-            self.listener.on_receiving_data_started();
+            self.listener.lock().unwrap().on_receiving_data_started();
         }
-        self.listener.on_message(message);
+        self.listener.lock().unwrap().on_message(raw_message);
     }
 }
 
@@ -65,18 +65,19 @@ pub struct MidiManager {
     input_state: Arc<MidiInputState>,
     /// The interpreter of inbound MIDI, injected by `Presenter::new`.
     /// `MidiManager` raises raw events to it synchronously; it does any thread hand-off before
-    /// re-entering the `Presenter`.
-    listener: Arc<dyn MidiInputListener>,
+    /// re-entering the `Presenter`. Wrapped in a `Mutex` so `on_message` (which takes `&mut self`)
+    /// can be invoked through the shared `Arc`.
+    listener: Arc<Mutex<dyn MidiInputListener>>,
 }
 
 /// For public self methods, see `impl IMidiHub for MidiManager` and `impl IMidiManager for MidiManager`.
 impl MidiManager {
-    pub fn new(output_connection: SharedOutput, listener: Arc<dyn MidiInputListener>) -> Self {
+    pub fn new(output_connection: SharedOutput, listener: Arc<Mutex<dyn MidiInputListener>>) -> Self {
         let input_state = Arc::new(MidiInputState::new());
-        let receiver = Arc::new(MonitoringReceiver {
+        let receiver = Arc::new(Mutex::new(MonitoringReceiver {
             input_state: Arc::clone(&input_state),
             listener: Arc::clone(&listener),
-        });
+        })) as Arc<Mutex<dyn MidiReceiver>>;
         Self {
             connection_monitor_stopper_sender: None,
             hub: MidiHub::new(output_connection, receiver),
@@ -94,7 +95,7 @@ impl MidiManager {
     /// the editor or instrument has disconnected.
     fn monitor_instrument_connection(
         input_state: Arc<MidiInputState>,
-        listener: Arc<dyn MidiInputListener>,
+        listener: Arc<Mutex<dyn MidiInputListener>>,
         stopper_receiver: mpsc::Receiver<()>,
     ) {
         let start_time = Instant::now();
@@ -111,7 +112,7 @@ impl MidiManager {
                         trace!("monitor_instrument_connection: Instrument disconnected.");
                         *input_state.last_message_received_time.lock().unwrap() = None;
                         input_state.is_receiving_data.store(false, Ordering::Relaxed);
-                        listener.on_receiving_data_stopped();
+                        listener.lock().unwrap().on_receiving_data_stopped();
                     }
                 }
             } else if !has_initially_not_connected_callback_been_called {
@@ -124,7 +125,7 @@ impl MidiManager {
                     // Not connected for 2 seconds after application start.
                     // So we can assume that the instrument is not yet connected.
                     // Provide an opportunity for a helpful message to be displayed.
-                    listener.on_receiving_data_stopped();
+                    listener.lock().unwrap().on_receiving_data_stopped();
                     has_initially_not_connected_callback_been_called = true;
                 }
             }
@@ -169,7 +170,7 @@ impl IMidiHub for MidiManager {
                 sleep(Duration::from_secs(MIDI_WAIT_SECS));
                 if !watchdog_state.is_receiving_data.load(Ordering::Relaxed) {
                     trace!("connect_device: Stopped receiving data");
-                    watchdog_listener.on_receiving_data_stopped();
+                    watchdog_listener.lock().unwrap().on_receiving_data_stopped();
                 }
             });
         }
@@ -179,7 +180,7 @@ impl IMidiHub for MidiManager {
                 trace!("connect_device {:?}: Calling on_devices_connected_changed \
                     because both ports are now connected", device_strategy.device_type());
                 // Raised synchronously; the listener hands off to the Presenter itself.
-                self.listener.on_devices_connected_changed();
+                self.listener.lock().unwrap().on_devices_connected_changed();
             }
         }
         Ok(())
@@ -221,7 +222,7 @@ impl IMidiHub for MidiManager {
         if were_devices_connected {
             // We have just disconnected one of the ports.
             trace!("refresh_devices: Calling on_devices_connected_changed because we have just disconnected one of the ports");
-            self.listener.on_devices_connected_changed();
+            self.listener.lock().unwrap().on_devices_connected_changed();
         }
     }
 }

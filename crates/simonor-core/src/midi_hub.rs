@@ -3,7 +3,7 @@ use midir::{
     MidiInput, MidiInputConnection, MidiInputPort, MidiOutput, MidiOutputPort,
 };
 use std::error::Error;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use crate::{MidiDeviceStrategy, DeviceType};
 use crate::{IMidiHub, MidiReceiver, SharedOutput};
 use crate::{IIo, Io};
@@ -20,13 +20,14 @@ pub struct MidiHub {
     /// The output connection, shared with the `MidiSender` that writes to it. `MidiHub` connects
     /// and disconnects it; the sender reads it.
     output_connection: SharedOutput,
-    /// The interpreter of inbound raw MIDI messages, injected by the owner.
-    receiver: Arc<dyn MidiReceiver>,
+    /// The interpreter of inbound raw MIDI messages, injected by the owner. Wrapped in a `Mutex`
+    /// so `on_message` (which takes `&mut self`) can be invoked through the shared `Arc`.
+    receiver: Arc<Mutex<dyn MidiReceiver>>,
 }
 
 /// For public self methods, see `impl IMidiHub for MidiHub`.
 impl MidiHub {
-    pub fn new(output_connection: SharedOutput, receiver: Arc<dyn MidiReceiver>) -> Self {
+    pub fn new(output_connection: SharedOutput, receiver: Arc<Mutex<dyn MidiReceiver>>) -> Self {
         Self {
             input: Io::<MidiInputPort>::new(Box::new(Self::create_midi_input())),
             input_connection: None,
@@ -56,7 +57,7 @@ impl MidiHub {
                 midi_port,
                 &device_name,
                 move |_, message, _| {
-                    receiver.on_message(message);
+                    receiver.lock().unwrap().on_message(message);
                 },
                 (),
             ) {
