@@ -7,29 +7,32 @@ use crate::{ErrorNotifier, SharedErrorNotifier, SharedOutput};
 
 /// A trait that defines the interface for sending MIDI messages.
 pub trait IMidiSender: Send {
-
     /// Returns a notifier of any MIDI send error.
     fn error_notifier(&self) -> SharedErrorNotifier;
 
     /// Sends a batch of MIDI messages.
-    fn send_batch(&mut self, batch: Vec<Box<[u8]>>, delay_after_each_send_ms: u8);
+    fn send_batch(&mut self, batch: Vec<Box<[u8]>>);
 
     /// Sends a MIDI Control Change message.
     /// Parameter `channel` is 1-based.
-    fn send_control_change(&mut self, channel: u8, cc_no: u8, value: u8, delay_after_send_ms: u8);
+    fn send_control_change(&mut self, channel: u8, cc_no: u8, value: u8);
 
     /// Sends a single MIDI message.
-    fn send_message(&mut self, message: &[u8], delay_after_send_ms: u8);
+    fn send_message(&mut self, message: &[u8]);
 
     /// Sends a MIDI note (polyphonic) aftertouch (pressure) message.
     /// Parameter `channel` is 1-based.
-    fn send_note_aftertouch(&mut self, channel: u8, key: u8, pressure: u8, delay_after_send_ms: u8);
+    fn send_note_aftertouch(&mut self, channel: u8, key: u8, pressure: u8);
+
+    /// Sets a delay in milliseconds to wait after each message is sent.
+    fn set_delay_after_each_send_ms(&mut self, delay_ms: u8);
 }
 
 /// A service for sending MIDI messages to the instrument via the shared output connection.
 pub struct MidiSender {
     output: SharedOutput,
     error_notifier: SharedErrorNotifier,
+    delay_after_each_send_ms: u8,
 }
 
 impl MidiSender {
@@ -37,6 +40,7 @@ impl MidiSender {
         MidiSender {
             output,
             error_notifier: Arc::new(Mutex::new(ErrorNotifier::new())),
+            delay_after_each_send_ms: 0,
         }
     }
 
@@ -84,19 +88,18 @@ impl IMidiSender for MidiSender {
     }
 
     /// Sends a batch of MIDI messages.
-    fn send_batch(&mut self, batch: Vec<Box<[u8]>>, delay_after_each_send_ms: u8) {
+    fn send_batch(&mut self, batch: Vec<Box<[u8]>>) {
         for message in batch {
-            self.send_message(&message, delay_after_each_send_ms);
+            self.send_message(&message);
         }
     }
 
-    fn send_control_change(&mut self, channel: u8, cc_no: u8, value: u8, delay_after_send_ms: u8) {
-        self.send_message(&Self::create_control_change(channel, cc_no, value),
-                          delay_after_send_ms);
+    fn send_control_change(&mut self, channel: u8, cc_no: u8, value: u8) {
+        self.send_message(&Self::create_control_change(channel, cc_no, value));
     }
 
     /// Sends a single MIDI message.
-    fn send_message(&mut self, message: &[u8], delay_after_send_ms: u8) {
+    fn send_message(&mut self, message: &[u8]) {
         let mut connection_option =
             self.output.lock().unwrap();
         if let Some(connection) = connection_option.as_mut() {
@@ -112,16 +115,19 @@ impl IMidiSender for MidiSender {
                 // Panic for stack trace diagnostics.
                 // panic!("Error when sending MIDI message: {:?}", message);
             });
-            if delay_after_send_ms > 0 {
-                sleep(std::time::Duration::from_millis(delay_after_send_ms as u64));
+            if self.delay_after_each_send_ms > 0 {
+                sleep(std::time::Duration::from_millis(self.delay_after_each_send_ms as u64));
             }
         }
     }
 
     fn send_note_aftertouch(
-        &mut self, channel: u8, key: u8, pressure: u8, delay_after_send_ms: u8) {
-        self.send_message(&Self::create_note_aftertouch(channel, key, pressure),
-                          delay_after_send_ms);
+        &mut self, channel: u8, key: u8, pressure: u8) {
+        self.send_message(&Self::create_note_aftertouch(channel, key, pressure));
+    }
+
+    fn set_delay_after_each_send_ms(&mut self, delay_ms: u8) {
+        self.delay_after_each_send_ms = delay_ms;
     }
 }
 

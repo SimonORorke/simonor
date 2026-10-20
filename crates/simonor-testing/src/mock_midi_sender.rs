@@ -56,18 +56,17 @@ impl IMidiSender for MockMidiSenderImpl {
         MOCK_MIDI_SENDER.lock().unwrap().error_notifier.clone()
     }
 
-    fn send_batch(&mut self, batch: Vec<Box<[u8]>>, delay_after_each_send_ms: u8) {
+    fn send_batch(&mut self, batch: Vec<Box<[u8]>>) {
         for message in batch {
-            self.send_message(&message, delay_after_each_send_ms);
+            self.send_message(&message);
         }
     }
 
-    fn send_control_change(&mut self, channel: u8, cc_no: u8, value: u8, delay_after_send_ms: u8) {
-        self.send_message(&MidiSender::create_control_change(channel, cc_no, value),
-                          delay_after_send_ms);
+    fn send_control_change(&mut self, channel: u8, cc_no: u8, value: u8) {
+        self.send_message(&MidiSender::create_control_change(channel, cc_no, value));
     }
 
-    fn send_message(&mut self, message: &[u8], _delay_after_send_ms: u8) {
+    fn send_message(&mut self, message: &[u8]) {
         let mut s = MOCK_MIDI_SENDER.lock().unwrap();
         // Parse + interpret
         let event = LiveEvent::parse(message).unwrap();
@@ -93,9 +92,11 @@ impl IMidiSender for MockMidiSenderImpl {
     }
 
     fn send_note_aftertouch(
-        &mut self, channel: u8, key: u8, pressure: u8, delay_after_send_ms: u8) {
-        self.send_message(&MidiSender::create_note_aftertouch(channel, key, pressure),
-                          delay_after_send_ms);
+        &mut self, channel: u8, key: u8, pressure: u8) {
+        self.send_message(&MidiSender::create_note_aftertouch(channel, key, pressure));
+    }
+
+    fn set_delay_after_each_send_ms(&mut self, _delay_ms: u8) {
     }
 }
 
