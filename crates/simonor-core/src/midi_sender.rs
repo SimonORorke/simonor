@@ -18,7 +18,7 @@ pub trait IMidiSender: Send {
     fn send_control_change(&mut self, channel: u8, cc_no: u8, value: u8);
 
     /// Sends a single MIDI message.
-    fn send_message(&mut self, message: &[u8]);
+    fn send_message(&mut self, raw_message: &[u8]);
 
     /// Sends a MIDI note (polyphonic) aftertouch (pressure) message.
     /// Parameter `channel` is 1-based.
@@ -68,6 +68,41 @@ impl MidiSender {
         )
     }
 
+    /// Creates a MIDI note off message.
+    /// Parameter `channel` is 1-based.
+    pub fn create_note_off(channel: u8, key: u8, velocity: u8) -> Vec<u8> {
+        Self::create_channel_message(
+            channel,
+            MidiMessage::NoteOff {
+                key: key.into(),
+                vel: velocity.into(),
+            },
+        )
+    }
+
+    /// Creates a MIDI note on message.
+    /// Parameter `channel` is 1-based.
+    pub fn create_note_on(channel: u8, key: u8, velocity: u8) -> Vec<u8> {
+        Self::create_channel_message(
+            channel,
+            MidiMessage::NoteOn {
+                key: key.into(),
+                vel: velocity.into(),
+            },
+        )
+    }
+
+    /// Creates a MIDI channel aftertouch on message.
+    /// Parameter `channel` is 1-based.
+    pub fn create_channel_aftertouch(channel: u8, velocity: u8) -> Vec<u8> {
+        Self::create_channel_message(
+            channel,
+            MidiMessage::ChannelAftertouch {
+                vel: velocity.into(),
+            },
+        )
+    }
+
     /// Creates a MIDI channel message.
     /// Parameter `channel` is 1-based.
     fn create_channel_message(channel: u8, message: MidiMessage) -> Vec<u8> {
@@ -99,18 +134,18 @@ impl IMidiSender for MidiSender {
     }
 
     /// Sends a single MIDI message.
-    fn send_message(&mut self, message: &[u8]) {
+    fn send_message(&mut self, raw_message: &[u8]) {
         let mut connection_option =
             self.output.lock().unwrap();
         if let Some(connection) = connection_option.as_mut() {
-            connection.send(message).unwrap_or_else(|_| {
+            connection.send(raw_message).unwrap_or_else(|_| {
                 // MIDI send errors are rare and unreproducible, but they do happen.
                 // I think it may sometimes happen when turning the instrument off and on again
                 // while everything is connected. I'm normally doing that for testing.
                 // But a user might need to do it too: some glitches that occur on the instrument
                 // are fixed if the instrument is bounced.
                 // So it's worth reporting the error to the user, suggesting a fix.
-                error!("Error when sending MIDI message: {:?}", message);
+                error!("Error when sending MIDI message: {:?}", raw_message);
                 self.error_notifier.lock().unwrap().notify_error();
                 // Panic for stack trace diagnostics.
                 // panic!("Error when sending MIDI message: {:?}", message);

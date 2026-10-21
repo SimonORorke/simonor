@@ -13,9 +13,17 @@ pub struct MockMidiSender {
     pub control_change_channel: u8,
     pub control_change_cc_no: u8,
     pub control_change_value: u8,
+    pub note_on_count: u16,
+    pub note_on_key: u8,
+    pub note_on_vel: u8,
+    pub note_off_count: u16,
+    pub note_off_key: u8,
+    pub note_off_vel: u8,
     pub note_aftertouch_count: u16,
     pub note_aftertouch_key: u8,
     pub note_aftertouch_vel: u8,
+    pub other_midi_count: u16,
+    pub non_midi_count: u16,
     error_notifier: SharedErrorNotifier,
     simulate_error: bool,
 }
@@ -27,9 +35,17 @@ impl MockMidiSender {
             control_change_channel: 0,
             control_change_cc_no: 0,
             control_change_value: 0,
+            note_on_count: 0,
+            note_on_key: 0,
+            note_on_vel: 0,
+            note_off_count: 0,
+            note_off_key: 0,
+            note_off_vel: 0,
             note_aftertouch_count: 0,
             note_aftertouch_key: 0,
             note_aftertouch_vel: 0,
+            other_midi_count: 0,
+            non_midi_count: 0,
             error_notifier: Arc::new(Mutex::new(ErrorNotifier::new())),
             simulate_error: false,
         }
@@ -66,10 +82,10 @@ impl IMidiSender for MockMidiSenderImpl {
         self.send_message(&MidiSender::create_control_change(channel, cc_no, value));
     }
 
-    fn send_message(&mut self, message: &[u8]) {
+    fn send_message(&mut self, raw_message: &[u8]) {
         let mut s = MOCK_MIDI_SENDER.lock().unwrap();
         // Parse + interpret
-        let event = LiveEvent::parse(message).unwrap();
+        let event = LiveEvent::parse(raw_message).unwrap();
         if let LiveEvent::Midi { channel, message } = event {
             match message {
                 MidiMessage::Controller { controller, value } => {
@@ -78,13 +94,25 @@ impl IMidiSender for MockMidiSenderImpl {
                     s.control_change_cc_no = u8::from(controller);
                     s.control_change_value = u8::from(value);
                 }
+                MidiMessage::NoteOn { key, vel } => {
+                    s.note_on_count += 1;
+                    s.note_on_key = u8::from(key);
+                    s.note_on_vel = u8::from(vel);
+                }
+                MidiMessage::NoteOff { key, vel } => {
+                    s.note_off_count += 1;
+                    s.note_off_key = u8::from(key);
+                    s.note_off_vel = u8::from(vel);
+                }
                 MidiMessage::Aftertouch { key, vel } => {
                     s.note_aftertouch_count += 1;
                     s.note_aftertouch_key = u8::from(key);
                     s.note_aftertouch_vel = u8::from(vel);
                 }
-                _ => {}
+                _ => { s.other_midi_count += 1 }
             }
+        } else {
+            s.non_midi_count += 1;
         }
         if s.simulate_error {
             s.error_notifier.lock().unwrap().notify_error();
