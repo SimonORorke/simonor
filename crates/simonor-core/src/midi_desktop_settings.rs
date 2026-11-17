@@ -10,6 +10,8 @@ pub trait MidiDesktopSettings {
     fn set_main_window_x(&mut self, value: i32);
     fn main_window_y(&self) -> i32;
     fn set_main_window_y(&mut self, value: i32);
+    fn colour_scheme(&self) -> u8;
+    fn set_colour_scheme(&mut self, value: u8);
     fn midi_input_device(&self) -> &str;
     fn set_midi_input_device(&mut self, value: &str);
     fn midi_output_device(&self) -> &str;
